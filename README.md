@@ -1,4 +1,4 @@
-# MyTinyWhisperer
+# MyTinyYoutubeWhisperer
 
 A minimal web app for downloading YouTube videos and audio, built with FastAPI and yt-dlp.
 
