@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyTinyWhisperer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .progress-bar-fill {
+      transition: width 0.4s ease;
+    }
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      padding-right: 2.25rem;
+    }
+  </style>
+</head>
+<body class="bg-white min-h-screen flex items-center justify-center px-4">
+
+  <div class="w-full max-w-lg">
+
+    <!-- Header -->
+    <div class="mb-10 text-center">
+      <h1 class="text-2xl font-semibold text-gray-900 tracking-tight">MyTinyWhisperer</h1>
+      <p class="mt-1 text-sm text-gray-400 font-light">Download YouTube videos and audio</p>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-md p-8 space-y-6">
+
+      <!-- URL input -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">YouTube URL</label>
+        <input
+          id="url"
+          type="url"
+          placeholder="https://youtube.com/watch?v=..."
+          class="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent placeholder-gray-300 transition"
+        />
+      </div>
+
+      <!-- Mode toggle -->
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Mode</label>
+        <div class="flex gap-2">
+          <button
+            id="btn-video"
+            onclick="setMode('video')"
+            class="flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border transition-all duration-150 bg-gray-900 text-white border-gray-900"
+          >
+            Video
+          </button>
+          <button
+            id="btn-audio"
+            onclick="setMode('audio')"
+            class="flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border transition-all duration-150 bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+          >
+            Audio
+          </button>
+        </div>
+      </div>
+
+      <!-- Video options (hidden for audio) -->
+      <div id="video-options" class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Resolution</label>
+          <select
+            id="resolution"
+            class="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white transition cursor-pointer"
+          >
+            <option value="1080p">1080p</option>
+            <option value="720p">720p</option>
+            <option value="480p">480p</option>
+            <option value="360p">360p</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Format</label>
+          <select
+            id="format"
+            class="w-full px-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white transition cursor-pointer"
+          >
+            <option value="mp4">mp4</option>
+            <option value="webm">webm</option>
+            <option value="mkv">mkv</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Audio info (shown for audio) -->
+      <div id="audio-info" class="hidden">
+        <div class="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-xl px-4 py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"/>
+            <circle cx="6" cy="18" r="3"/>
+            <circle cx="18" cy="16" r="3"/>
+          </svg>
+          <span>MP3 · 192 kbps · Best available quality</span>
+        </div>
+      </div>
+
+      <!-- Download button -->
+      <button
+        id="download-btn"
+        onclick="startDownload()"
+        class="w-full py-3 px-6 text-sm font-medium text-white bg-gray-900 rounded-xl hover:bg-gray-700 active:bg-gray-800 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Download
+      </button>
+
+      <!-- Progress section (hidden by default) -->
+      <div id="progress-section" class="hidden space-y-3">
+        <div class="flex justify-between items-baseline">
+          <span id="progress-status" class="text-xs font-medium text-gray-500 uppercase tracking-wider">Preparing…</span>
+          <span id="progress-percent" class="text-sm font-semibold text-gray-900">0%</span>
+        </div>
+
+        <!-- Bar -->
+        <div class="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div id="progress-bar" class="progress-bar-fill h-full bg-gray-900 rounded-full" style="width: 0%"></div>
+        </div>
+
+        <!-- Speed / ETA -->
+        <div class="flex justify-between text-xs text-gray-400">
+          <span id="progress-speed"></span>
+          <span id="progress-eta"></span>
+        </div>
+      </div>
+
+      <!-- Error message (hidden by default) -->
+      <div id="error-box" class="hidden">
+        <div class="flex gap-3 items-start text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span id="error-message">An error occurred.</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <p class="mt-8 text-center text-xs text-gray-300">Powered by yt-dlp</p>
+
+  </div>
+
+  <script>
+    let currentMode = 'video';
+    let currentEventSource = null;
+
+    function setMode(mode) {
+      currentMode = mode;
+      const videoOptions = document.getElementById('video-options');
+      const audioInfo = document.getElementById('audio-info');
+      const btnVideo = document.getElementById('btn-video');
+      const btnAudio = document.getElementById('btn-audio');
+
+      if (mode === 'video') {
+        videoOptions.classList.remove('hidden');
+        audioInfo.classList.add('hidden');
+        btnVideo.className = 'flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border transition-all duration-150 bg-gray-900 text-white border-gray-900';
+        btnAudio.className = 'flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border transition-all duration-150 bg-white text-gray-600 border-gray-200 hover:border-gray-300';
+      } else {
+        videoOptions.classList.add('hidden');
+        audioInfo.classList.remove('hidden');
+        btnAudio.className = 'flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border transition-all duration-150 bg-gray-900 text-white border-gray-900';
+        btnVideo.className = 'flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border transition-all duration-150 bg-white text-gray-600 border-gray-200 hover:border-gray-300';
+      }
+    }
+
+    function showProgress() {
+      document.getElementById('progress-section').classList.remove('hidden');
+      document.getElementById('error-box').classList.add('hidden');
+    }
+
+    function hideProgress() {
+      document.getElementById('progress-section').classList.add('hidden');
+    }
+
+    function showError(message) {
+      hideProgress();
+      document.getElementById('error-message').textContent = message;
+      document.getElementById('error-box').classList.remove('hidden');
+    }
+
+    function updateProgress(percent, speed, eta, statusLabel) {
+      document.getElementById('progress-bar').style.width = percent + '%';
+      document.getElementById('progress-percent').textContent = Math.round(percent) + '%';
+      document.getElementById('progress-status').textContent = statusLabel || 'Downloading…';
+      document.getElementById('progress-speed').textContent = speed || '';
+      document.getElementById('progress-eta').textContent = eta ? 'ETA ' + eta : '';
+    }
+
+    async function startDownload() {
+      const url = document.getElementById('url').value.trim();
+      if (!url) {
+        showError('Please enter a YouTube URL.');
+        return;
+      }
+
+      // Close any previous SSE connection
+      if (currentEventSource) {
+        currentEventSource.close();
+        currentEventSource = null;
+      }
+
+      const btn = document.getElementById('download-btn');
+      btn.disabled = true;
+
+      showProgress();
+      updateProgress(0, '', '', 'Preparing…');
+
+      const body = {
+        url,
+        type: currentMode,
+        resolution: document.getElementById('resolution')?.value || '1080p',
+        format: document.getElementById('format')?.value || 'mp4',
+      };
+
+      let downloadId;
+      try {
+        const resp = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) {
+          const data = await resp.json();
+          throw new Error(data.detail || 'Failed to start download');
+        }
+        const data = await resp.json();
+        downloadId = data.download_id;
+      } catch (err) {
+        showError(err.message);
+        btn.disabled = false;
+        return;
+      }
+
+      // Open SSE stream
+      currentEventSource = new EventSource(`/api/progress/${downloadId}`);
+
+      currentEventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.status === 'complete') {
+          currentEventSource.close();
+          currentEventSource = null;
+          updateProgress(100, '', '', 'Complete');
+          document.getElementById('progress-status').textContent = 'Complete ✓';
+          btn.disabled = false;
+          // Trigger browser download
+          window.location.href = `/api/file/${downloadId}`;
+          // Reset UI after short delay
+          setTimeout(resetUI, 3000);
+        } else if (data.status === 'error') {
+          currentEventSource.close();
+          currentEventSource = null;
+          showError(data.message || 'An error occurred during download.');
+          btn.disabled = false;
+        } else {
+          updateProgress(
+            data.percent || 0,
+            data.speed || '',
+            data.eta || '',
+            'Downloading…'
+          );
+        }
+      };
+
+      currentEventSource.onerror = () => {
+        currentEventSource.close();
+        currentEventSource = null;
+        showError('Connection to server lost. Please try again.');
+        btn.disabled = false;
+      };
+    }
+
+    function resetUI() {
+      hideProgress();
+      document.getElementById('error-box').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
